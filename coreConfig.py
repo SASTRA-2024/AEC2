@@ -1,5 +1,6 @@
 #CORE CONFIGURATION FILE
 
+
 #DATASET AND DATALOADERS 
 annot_file = "C:\\Users\\nagav\\OneDrive\\Documents\\UrbanSound8K.tar\\UrbanSound8K\\metadata\\UrbanSound8K.csv"
 audio_dir = "C:\\Users\\nagav\\OneDrive\\Documents\\UrbanSound8K.tar\\UrbanSound8K\\audio"
@@ -66,10 +67,18 @@ lfccTransform = T.LFCC(
     ).to(device)
    
 
-#______________________________MODELS________________________________
+#______________________________MODEL AND TRAINING________________________________
 #use class names specified in MyModels.py , this may affect other sections of the module
 currModel = "CNN_Net"
-epochs  = 1 
+epochs  = 50
+"""
+Set DIRECT_TRAIN to True if you want to train the model by running this file 
+Set ENSEMBLE_TEST to True if you want to test ensemble model by running this file
+
+"""
+DIRECT_TRAIN = True
+ENSEMBLE_TEST = False 
+
 #valid spec options  "mfcc" , "lfcc" , "mel" , None (use None in ensumble model)
 models = {
     "RNN_GRU" : {
@@ -95,6 +104,12 @@ models = {
     }
 
 if __name__ == "__main__" :
+    if DIRECT_TRAIN :
+        print("Training and testing")
+        exec(open("trainingAndTesting.py").read())
+    if ENSEMBLE_TEST :
+        print("Ensemble test")
+        exec(open("ensembleModel.py").read())
     pass 
 
     
