@@ -42,10 +42,9 @@ def getModels():
     
 
 if __name__ == "__main__" :
-
+    print(cc.specSet)
     dataLoader = DataLoader(usd.UrbanSoundDataset(
-                toDB = {"mfcc" : False , "mel" : True},
-                spec = None,
+                spec = cc.specSet,
                 train = True,
                 test_fold = [1]
                 ),

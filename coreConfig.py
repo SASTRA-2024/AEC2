@@ -67,9 +67,9 @@ lfccTransform = T.LFCC(
     ).to(device)
    
 
-#______________________________MODEL AND TRAINING________________________________
+#______________________________MODELS________________________________
 #use class names specified in MyModels.py , this may affect other sections of the module
-currModel = "CNN_Net"
+currModel = "RNN_GRU"
 epochs  = 50
 """
 Set DIRECT_TRAIN to True if you want to train the model by running this file 
@@ -79,29 +79,30 @@ Set ENSEMBLE_TEST to True if you want to test ensemble model by running this fil
 DIRECT_TRAIN = True
 ENSEMBLE_TEST = False 
 
-#valid spec options  "mfcc" , "lfcc" , "mel" , None (use None in ensumble model)
+#valid spec options  "mfcc" , "lfcc" , "mel"  , "mfccDB" , "lfccDB" , "melDB" 
 models = {
     "RNN_GRU" : {
                 "params" : (171 , 32 , 8, 10),  #Class parameters
                 "inDim" : (-1, 64, 171) ,       #input dim
-                 "spec" : "mfcc" ,              #which spectrogram 
-                 "toDB" : {"mfcc" : False} ,               #conversion to decible
-                "loss_fun" : "nn.CrossEntropyLoss().to(device)", #loss functions 
+                 "spec" : "mfcc" ,              # Spectrogram type
                 "optimizer" : "torch.optim.ASGD(model.parameters() , lr = 0.001)",#optimizers 
-                 "path" : "C:\\Users\\nagav\\OneDrive\\Desktop\\ML_Moduled\\Trained\\RNN_GRU.pth", #model path
-                 "results" : "\\performace\\RNN_GRU" #result path
+                 "path" : "Trained\\RNN_GRU.pth", #model path
+                 "results" : "performace\\RNN_GRU" #result path
                  },
     "CNN_Net" : {
                 "params" : None ,  #Class parameters 
                 "inDim" : (32 , 1 , 64 , 173) ,       #input dim
-                 "spec" : "mel" ,              #which spectrogram 
-                 "toDB" : {"mel" : True} ,               #conversion to decible
-                "loss_fun" : "nn.CrossEntropyLoss().to(device)", #loss function 
+                 "spec" : "melDB" ,              # spectrogram type  
                 "optimizer" : "torch.optim.Adam(model.parameters(), lr=0.001, eps=1e-07, weight_decay=1e-3)",#optimizers 
-                 "path" : "C:\\Users\\nagav\\OneDrive\\Desktop\\ML_Moduled\\Trained\\CNN_Net.pth", #model path
-                 "results" : "\\performace\\CNN_Net" #result path
+                 "path" : "Trained\\CNN_Net.pth", #model path
+                 "results" : "performace\\CNN_Net" #result path
                  },
     }
+
+specSet = set()
+for k , v in models.items() :
+    specSet.add(v['spec'])
+
 
 if __name__ == "__main__" :
     if DIRECT_TRAIN :

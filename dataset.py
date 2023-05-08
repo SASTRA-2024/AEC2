@@ -9,25 +9,23 @@ class UrbanSoundDataset(Dataset) :
     mel_t = cc.melTransform
     amp_to_DB = T.AmplitudeToDB().to(device)
     
-    def __init__(self, toDB ,spec = None , train = True, test_fold = [1]  , kfold = 10) :
+    def __init__(self, spec = None , train = True, test_fold = [1]  , kfold = 10) :
         self.annotation = pd.read_csv(cc.annot_file)
         self.audio_dir = cc.audio_dir
         self.device = device 
         self.target_sample_rate = cc.sample_rate
         self.num_samples = cc.num_samples
         self.train = train
-        self.spec = spec.strip() if spec else None 
-        self.toDB = toDB
+        self.spec = list(spec) if type(spec) == type(set()) else spec 
 
-        self.trainSet = [i for i in range(len(self.annotation)) if int(self.annotation.iloc[i ,5]) not in test_fold]
-        self.testSet = [i for i in range(len(self.annotation)) if int(self.annotation.iloc[i ,5]) in test_fold]
+        self.subSet = [i for i in range(len(self.annotation)) if int(self.annotation.iloc[i ,5]) not in test_fold] if train else [i for i in range(len(self.annotation)) if int(self.annotation.iloc[i ,5]) in test_fold]
         
     def __len__(self) :
-        return len(self.trainSet) if self.train else len(self.testSet)
+        return len(self.subSet) 
 
     def __getitem__(self,index):
 
-        index = self.trainSet[index] if self.train else self.testSet[index]                                            
+        index = self.subSet[index]                                          
     
         audio_sample_path = self.get_audio_sample_path(index)  
         label = self.get_audio_sample_label(index)             
@@ -38,21 +36,39 @@ class UrbanSoundDataset(Dataset) :
         signal = self.cutIfNecessary(signal)
         signal = self.rightPadIfNecessary(signal)
 
+        d = dict()
+        if ("mfcc" in self.spec) or (self.spec is None) :
+            mfcc = self.mfcc_t(signal)
+            d.update({"mfcc" : mfcc})
+            
+        if ("mfccDB" in self.spec) or (self.spec is None) :
+            mfccDB = self.amp_to_DB(self.mfcc_t(signal))
+            d.update({"mfccDB" : mfccDB})
+
+        if ("lfcc" in self.spec) or (self.spec is None):
+            lfcc = self.lfcc_t(signal)
+            d.update({"lfcc" : lfcc})
+
+        if ("lfccDB" in self.spec) or (self.spec is None) :
+            lfccDB = self.amp_to_DB(self.lfcc_t(signal))
+            d.update({"lfccDB" : lfccDB})
+
+        if ("mel" in self.spec) or (self.spec is None) :
+            mel = self.mel_t(signal)
+            d.update({"mel" : mel})
         
-        mfcc = self.mfcc_t(signal)
-        if self.toDB.get("mfcc",False) :
-            mfcc = self.amp_to_DB(mfcc)
-        
-        lfcc = self.lfcc_t(signal)
-        if self.toDB.get("lfcc",False) :
-            lfcc = self.amp_to_DB(lfcc)
-        
-        mel = self.mel_t(signal)
-        if self.toDB.get("mel",False) :
-            mel = self.amp_to_DB(mel)
-        
-        d = {"mfcc" : mfcc , "lfcc" : lfcc , "mel" : mel}
-        return d.get(self.spec,d) , label
+        if ("melDB" in self.spec) or (self.spec is None) :
+            melDB = self.amp_to_DB(self.mel_t(signal))
+            d.update({"melDB" : melDB})
+
+
+        if d is dict() :
+            raise ValueError("Not a valid spec value(s)")
+
+        if type(self.spec) == type(str()):
+            return d.get(self.spec,d) , label
+        else :
+            return d , label 
 
     def cutIfNecessary(self , signal) :
         if signal.shape[1] > self.num_samples :
@@ -95,7 +111,6 @@ if __name__ == "__main__":
 
     ds = UrbanSoundDataset(
                     spec = "mel" ,
-                    toDB = cc.models[cc.currModel]["toDB"],
                     train = True ,
                     test_fold = [1]
                     )
@@ -106,14 +121,12 @@ if __name__ == "__main__":
     print(testFoldSet)
     loaders = [(DataLoader(UrbanSoundDataset(
                     spec = cc.models[cc.currModel]["spec"],
-                    toDB = cc.models[cc.currModel]["toDB"],
                     train = True ,
                     test_fold = t
                     ),
                 batch_size=cc.batch_size, shuffle=True),
                 DataLoader(UrbanSoundDataset(
                     spec = cc.models[cc.currModel]["spec"],
-                    toDB = cc.models[cc.currModel]["toDB"],
                     train = False ,
                     test_fold = t
                     ),

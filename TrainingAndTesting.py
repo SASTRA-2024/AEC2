@@ -24,8 +24,6 @@ def train_single_epoch(model , data_loader , loss_fun , optimiser , device ) :
         inp , tar = inp.to(device) , tar.to(device)
 
         logits = model(inp.view(*inpDim))
-        print(logits.shape)
-        print(logits)
         loss = loss_fun(logits , tar)
         acc = met.acc(logits , tar)
 
@@ -47,22 +45,21 @@ if __name__ == "__main__":
     testFoldSet = [[j+1 for j in i] for i in it.permutations([i for i in range(cc.kfold)], r=cc.num_test_folds)]
 
     Spec = cc.models[cc.currModel]["spec"]
-    ToDB = cc.models[cc.currModel]["toDB"]
     params = cc.models[cc.currModel]["params"]
     pt_file = cc.models[cc.currModel]["path"]
     print(pt_file)
     
-    print(testFoldSet)
+    for i , val in enumerate(testFoldSet) : 
+        print(f"Fold{i} = {val}")
+
     loaders = [(DataLoader(usd.UrbanSoundDataset(
                     spec = Spec,
-                    toDB = ToDB ,
                     train = True ,
                     test_fold = fold
                     ),
                 batch_size=cc.batch_size, shuffle=True , drop_last = cc.drop_last),
                 DataLoader(usd.UrbanSoundDataset(
                     spec = Spec,
-                    toDB = ToDB ,
                     train = False ,
                     test_fold = fold
                     ),
@@ -73,14 +70,11 @@ if __name__ == "__main__":
 
     if os.path.exists(pt_file):
         status = model.load_state_dict(torch.load(pt_file))
-        print(status)
+        print(f"\n{cc.currModel} : {status}")
         
     model = model.to(device)
-    loss_fun = eval(cc.models[cc.currModel]["loss_fun"])
+    loss_fun = nn.CrossEntropyLoss().to(device)
     optimizer = eval(cc.models[cc.currModel]["optimizer"])
-
-    print(loss_fun , optimizer ,end = "\n\n") 
-    
 
     print("PERFORMING K-FOLDS")
     for i , t in enumerate(loaders) :
